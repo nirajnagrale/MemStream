@@ -3,7 +3,7 @@ import sys
 from websockets import connect
 
 async def main():
-    uri = "ws://localhost:9001"
+    uri = "ws://localhost:9002"
     try:
         async with connect(uri) as websocket:
             print(f"Connected to {uri}. Listening for messages...")
@@ -13,7 +13,6 @@ async def main():
         print(f"Connection error: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
-    # On some environments (e.g. Jupyter), asyncio.run() may fail; use this guard:
     try:
         asyncio.run(main())
     except RuntimeError:
