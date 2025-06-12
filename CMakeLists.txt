@@ -2,20 +2,20 @@ cmake_minimum_required(VERSION 3.15)
 project(cpp-pipeline VERSION 1.0.0 LANGUAGES CXX)
 
 
-# ─── Build Settings ─────────────────────────────────────
+# ─── Build Settings 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix" FORCE)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 
-# ─── Find Dependencies ──────────────────────────────────
+# ─── Find Dependencies 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(FFTW3 REQUIRED IMPORTED_TARGET fftw3)
 
 
 
-# ─── Core executable (temporary stub) ──────────────────
-add_executable(cp_engine src/main.cpp)
+# engine
+add_executable(cp_engine src/engine.cpp)
 
 # link against our JSON parser
 find_package(nlohmann_json REQUIRED)
@@ -26,12 +26,12 @@ target_link_libraries(cp_engine
 install(TARGETS cp_engine
         RUNTIME DESTINATION bin)
 
-# ─── Example node: RandomSource ────────────────────────
+# RandomSource node
 add_executable(RandomSource nodes/RandomSource.cpp)
 install(TARGETS RandomSource
         RUNTIME DESTINATION bin)
 
-# ─── Example node: FFTTransform ───────────────────────
+# FFTTransform node
 add_executable(FFTTransform nodes/FFTTransform.cpp)
 target_link_libraries(FFTTransform
   PRIVATE
@@ -40,17 +40,25 @@ target_link_libraries(FFTTransform
 install(TARGETS FFTTransform
         RUNTIME DESTINATION bin)
 
-# ─── Example node: ConsoleSink ─────────────────────────
-add_executable(ConsoleSink nodes/ConsoleSink.cpp)
-install(TARGETS ConsoleSink
+# WebSocketSink node 
+add_executable(WebSocketSink nodes/WebSocketSink.cpp)
+install(TARGETS WebSocketSink
         RUNTIME DESTINATION bin)
 
-# ─── Config files into /etc/cpp-pipeline ───────────────
+find_package(Boost REQUIRED COMPONENTS system)
+target_link_libraries(WebSocketSink
+  PRIVATE
+    Boost::system
+)
+install(TARGETS WebSocketSink
+        RUNTIME DESTINATION bin)
+
+# Config files into /etc/cpp-pipeline directory
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/config/
-        DESTINATION etc/cpp-pipeline
+        DESTINATION /etc/cpp-pipeline
         FILES_MATCHING PATTERN "*.json")
 
-# ─── CPack (Debian) Packaging ───────────────────────────
+# CPack (Debian) Packaging 
 set(CPACK_GENERATOR          "DEB")
 set(CPACK_PACKAGE_NAME       "cpp-pipeline")
 set(CPACK_PACKAGE_VERSION    ${PROJECT_VERSION})

@@ -10,10 +10,12 @@
 
 using json = nlohmann::json;
 
+using namespace std;
+
 // Simple struct to hold one node’s info
 struct Node {
-    std::string type;
-    std::vector<std::string> args;
+    string type;
+    vector<std::string> args;
     pid_t pid = -1;
 };
 
@@ -21,7 +23,7 @@ int main(int argc, char** argv) {
     const char* cfgPath = (argc > 1) ? argv[1] : "config/example.json";
     std::ifstream in(cfgPath);
     if (!in) {
-        std::cerr << "Failed to open config: " << cfgPath << "\n";
+        cerr << "Failed to open config: " << cfgPath << "\n";
         return 1;
     }
 
@@ -29,7 +31,7 @@ int main(int argc, char** argv) {
     auto jnodes = cfg["nodes"];
     size_t n = jnodes.size();
     if (n < 2) {
-        std::cerr << "Need at least 2 nodes\n";
+        cerr << "Need at least 2 nodes\n";
         return 1;
     }
 
@@ -60,8 +62,8 @@ int main(int argc, char** argv) {
             return 1;
         }
         if (pid == 0) {
-            // Child
-
+            // Child process
+            // Set stdin/stdout for this node
             // If not first: connect stdin to read-end of previous pipe
             if (i > 0) {
                 dup2(pipes[i-1][0], STDIN_FILENO);
@@ -78,7 +80,7 @@ int main(int argc, char** argv) {
             }
 
             // Build argv array for exec
-            std::vector<char*> exec_argv;
+            vector<char*> exec_argv;
             exec_argv.push_back(const_cast<char*>(nodes[i].type.c_str()));
             for (auto& s : nodes[i].args)
                 exec_argv.push_back(const_cast<char*>(s.c_str()));

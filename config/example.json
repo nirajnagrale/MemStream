@@ -2,7 +2,7 @@
   "nodes": [
     { "id": "src", "type": "RandomSource", "args": [1000] },
     { "id": "fft", "type": "FFTTransform", "args": [256] },
-    { "id": "sink", "type": "ConsoleSink",  "args": [] }
+    { "id": "sink", "type": "WebSocketSink",  "args": [9001] }
   ],
   "edges": [
     { "from": "src",  "to": "fft"  },
