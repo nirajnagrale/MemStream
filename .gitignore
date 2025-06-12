@@ -1,2 +1,3 @@
-/build
-/.vscode
+build
+.vscode/
+cpp-pipeline-1.0.0-Linux.deb

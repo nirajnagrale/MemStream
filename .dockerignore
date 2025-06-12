@@ -2,3 +2,4 @@ build
 *.deb
 .git
 .vscode
+cpp-pipeline-1.0.0-Linux.deb

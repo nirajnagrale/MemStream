@@ -89,13 +89,16 @@ docker run --rm -it \
 ```json
 {
   "nodes": [
-    { "id": "src",  "type": "RandomSource",   "args": [1000] }, // random points per second
-    { "id": "fft",  "type": "FFTTransform",   "args": [256] }, // fft window size
-    { "id": "sink", "type": "WebSocketSink",  "args": [9002] } //edit the port here eg is 9002
+    { "id": "src",  "type": "RandomSource",   "args": [1000] }, 
+    { "id": "fft",  "type": "FFTTransform",   "args": [256] }, 
+    { "id": "sink", "type": "WebSocketSink",  "args": [9002] } 
   ],
   "edges": [
     { "from": "src", "to": "fft" },
     { "from": "fft", "to": "sink" }
   ]
 }
+RandomSource args: 1000 = samples per second
+FFTTransform args: 256 = FFT window size
+WebSocketSink args: 9002 = WebSocket port
 ```
