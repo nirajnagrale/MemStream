@@ -1,0 +1,11 @@
+{
+  "nodes": [
+    { "id": "src", "type": "RandomSource", "args": [1000] },
+    { "id": "fft", "type": "FFTTransform", "args": [256] },
+    { "id": "sink", "type": "ConsoleSink",  "args": [] }
+  ],
+  "edges": [
+    { "from": "src",  "to": "fft"  },
+    { "from": "fft",  "to": "sink" }
+  ]
+}
