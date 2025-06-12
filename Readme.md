@@ -2,24 +2,6 @@
 
 **Minimal, real-time in-memory data-pipeline engine**
 
-This project provides a Kafka-style, UNIX-domain-socket based C++ pipeline engine (`cp_engine`) that wires independent node processes together, plus three example nodes:
-
-* **RandomSource**: continuously emits random samples at a configurable rate.
-* **FFTTransform**: consumes fixed-size windows of samples, computes an FFT via FFTW, forwards magnitudes.
-* **WebSocketSink**: streams incoming data over a WebSocket endpoint for real-time visualization.
-
-## Table of Contents
-
-* [Prerequisites](#prerequisites)
-* [Build & Install](#build--install)
-* [Running the Pipeline](#running-the-pipeline)
-* [Packaging (DEB)](#packaging-deb)
-* [Docker Build](#docker-build)
-* [Example Configuration](#example-configuration)
-* [Testing](#testing)
-* [Project Layout](#project-layout)
-* [License](#license)
-
 ## Prerequisites
 
 Choose one of the following approaches:
@@ -43,15 +25,15 @@ sudo apt install -y \
 
 ```bash
 # Clone repo
-git clone <your-repo-url> cpp-pipeline
+git clone https://github.com/nirajnagrale/cpp-pipeline cpp-pipeline
 cd cpp-pipeline
 
-# Out-of-source build
+# Out-of-source build // if you want to build native
 mkdir build && cd build
 cmake -S .. -B .
 cmake --build .
 
-# Install binaries + config
+# Install binaries + config // if you want to build native
 sudo cmake --install .
 ```
 
@@ -64,6 +46,7 @@ sudo cmake --install .
    cp_engine /etc/cpp-pipeline/example.json
    ```
 3. Connect a WebSocket client to `ws://localhost:<port>` (see [Example Configuration](#example-configuration)).
+Use ws_client.py to check for data . Run python3 ws_client.py to check the WebSocket data upate the code uri `ws://localhost:<port>` in ws_client.py
 
 ## Packaging (DEB)
 
@@ -106,9 +89,9 @@ docker run --rm -it \
 ```json
 {
   "nodes": [
-    { "id": "src",  "type": "RandomSource",   "args": [1000] },
-    { "id": "fft",  "type": "FFTTransform",   "args": [256] },
-    { "id": "sink", "type": "WebSocketSink",  "args": [9002] }
+    { "id": "src",  "type": "RandomSource",   "args": [1000] }, // random points per second
+    { "id": "fft",  "type": "FFTTransform",   "args": [256] }, // fft window size
+    { "id": "sink", "type": "WebSocketSink",  "args": [9002] } //edit the port here eg is 9002
   ],
   "edges": [
     { "from": "src", "to": "fft" },
