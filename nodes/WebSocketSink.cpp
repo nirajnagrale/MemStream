@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
         std::cout << "Client disconnected\n";
     });
 
-    // Try binding once
+   
     try {
         ws.listen(port);
     } catch (const std::exception &e) {
@@ -46,12 +46,11 @@ int main(int argc, char** argv) {
     }
     ws.start_accept();
 
-    // Run WebSocket service in background
+   
     std::thread([&]{ ws.run(); }).detach();
 
     std::cout << "WebSocketSink listening on port " << port << "\n";
 
-    // Read samples (double) from stdin and forward as JSON text
     double sample;
     while (cin.read(reinterpret_cast<char*>(&sample), sizeof(sample))) {
         if (!has_client) continue;
