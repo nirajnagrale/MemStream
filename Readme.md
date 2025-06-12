@@ -98,7 +98,7 @@ docker run --rm -it \
     { "from": "fft", "to": "sink" }
   ]
 }
+```
 RandomSource args: 1000 = samples per second
 FFTTransform args: 256 = FFT window size
 WebSocketSink args: 9002 = WebSocket port
-```
