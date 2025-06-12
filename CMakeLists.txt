@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 3.15)
 project(cpp-pipeline VERSION 1.0.0 LANGUAGES CXX)
 
 
-# ─── Build Settings 
+#  Build Settings 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix" FORCE)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 
-# ─── Find Dependencies 
+# Find Dependencies 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(FFTW3 REQUIRED IMPORTED_TARGET fftw3)
 
