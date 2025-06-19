@@ -1,0 +1,11 @@
+{
+  "nodes": [
+    { "id": "random", "type": "RandomSource" },
+    { "id": "tcp",    "type": "TcpSocket", "port": 8000 },
+    { "id": "udp",    "type": "UdpSocket", "host": "127.0.0.1", "port": 9000 }
+  ],
+  "edges": [
+    { "from": "random", "to": "tcp" },
+    { "from": "random", "to": "udp" }
+  ]
+}

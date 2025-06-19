@@ -1,0 +1,62 @@
+cmake_minimum_required(VERSION 3.10)
+project(cpp-pipeline VERSION 1.1.0 LANGUAGES CXX)
+
+# Require C++17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Thread support for std::thread (pulls in -pthread)
+find_package(Threads REQUIRED)
+
+# JSON parsing
+find_package(nlohmann_json 3.2.0 REQUIRED)
+
+# ØMQ core
+find_package(ZeroMQ REQUIRED)
+
+# Boost.System for WebSocket++’s Asio backend (if used)
+find_package(Boost REQUIRED COMPONENTS system)
+
+# Ensure the build-time config directory exists
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/config)
+
+# Copy config/config.json into build/config/config.json
+configure_file(
+  ${CMAKE_SOURCE_DIR}/config/config.json
+  ${CMAKE_BINARY_DIR}/config/config.json
+  COPYONLY
+)
+
+# Engine executable
+add_executable(Engine Engine.cpp)
+
+# Include directories (WebSocket++ is header-only; needs Boost.System)
+target_include_directories(Engine PRIVATE
+    ${Boost_INCLUDE_DIRS}
+)
+
+# Link libraries
+target_link_libraries(Engine PRIVATE
+    ZeroMQ::zmq
+    nlohmann_json::nlohmann_json
+    Threads::Threads
+    Boost::system
+)
+
+# Install rules
+install(TARGETS Engine RUNTIME DESTINATION usr/bin)
+
+# Install the config tree under /etc/cpp-pipeline/config
+install(
+  DIRECTORY ${CMAKE_BINARY_DIR}/config
+  DESTINATION etc/cpp-pipeline
+)
+
+# CPack settings for .deb packaging
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_NAME "cpp-pipeline")
+set(CPACK_PACKAGE_VERSION "1.1.0")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Niraj Nagrale niraj6192@gmail.com")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libzmq5, libboost-system1.71.0, libc6 (>= 2.27)")
+set(CPACK_GENERATOR "DEB")
+include(CPack)
