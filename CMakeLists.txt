@@ -9,8 +9,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 #–– Dependencies
 find_package(nlohmann_json REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
-find_package(ZeroMQ    REQUIRED)
-find_package(cppzmq    REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_search_module(ZMQ REQUIRED IMPORTED_TARGET libzmq)
 
 #–– Make our headers available
 # (assumes your shared headers live in <project-root>/include/)
@@ -19,13 +19,11 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 #–– engine (includes config_parser.cpp)
 add_executable(cp_engine
   src/engine.cpp
-  src/config_parser.cpp
 )
 target_link_libraries(cp_engine
   PRIVATE
     nlohmann_json::nlohmann_json
-    ZeroMQ::zmq
-    cppzmq::zmq
+    PkgConfig::ZMQ
 )
 install(TARGETS cp_engine
         RUNTIME DESTINATION bin)
@@ -36,36 +34,33 @@ add_executable(RandomSource
 )
 target_link_libraries(RandomSource
   PRIVATE
-    ZeroMQ::zmq
-    cppzmq::zmq
+    PkgConfig::ZMQ
 )
 install(TARGETS RandomSource
         RUNTIME DESTINATION bin)
 
 #–– TCPWebSocket node
-add_executable(TCPWebSocket
-  nodes/TCPWebSocket.cpp
+add_executable(TcpSocket
+  nodes/TcpSocket.cpp
 )
-target_link_libraries(TCPWebSocket
+target_link_libraries(TcpSocket
   PRIVATE
     Boost::system
-    ZeroMQ::zmq
-    cppzmq::zmq
+    PkgConfig::ZMQ
 )
-install(TARGETS TCPWebSocket
+install(TARGETS TcpSocket
         RUNTIME DESTINATION bin)
 
 #–– UDPWebSocket node
-add_executable(UDPWebSocket
-  nodes/UDPWebSocket.cpp
+add_executable(UdpSocket
+  nodes/UdpSocket.cpp
 )
-target_link_libraries(UDPWebSocket
+target_link_libraries(UdpSocket
   PRIVATE
     Boost::system
-    ZeroMQ::zmq
-    cppzmq::zmq
+    PkgConfig::ZMQ
 )
-install(TARGETS UDPWebSocket
+install(TARGETS UdpSocket
         RUNTIME DESTINATION bin)
 
 #–– Config files into /etc/cpp-pipeline

@@ -9,6 +9,7 @@
 #include <future>
 #include <utils/io_utils.h>
 #include <utils/socket_utils.h>
+#include<chrono>
 
 namespace asio    = boost::asio;
 using asio::ip::udp;
@@ -57,11 +58,12 @@ void zmq_receive_loop(zmq::context_t &ctx,
         items.push_back({ s.handle(), 0, ZMQ_POLLIN, 0 });
 
     while (true) {
-        zmq::poll(items.data(), items.size(), -1);
+        zmq::poll(items, std::chrono::milliseconds(-1));
         for (size_t i = 0; i < items.size(); ++i) {
             if (items[i].revents & ZMQ_POLLIN) {
                 zmq::message_t msg;
-                pullers[i].recv(msg, zmq::recv_flags::none);
+                auto rc = pullers[i].recv(msg, zmq::recv_flags::none);
+                if(!rc) continue;
                 std::string data{
                     static_cast<char*>(msg.data()), msg.size()
                 };
