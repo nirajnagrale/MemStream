@@ -1,11 +1,11 @@
 {
   "nodes": [
-    { "id": "random", "type": "RandomSource" },
-    { "id": "tcp",    "type": "TcpSocket", "port": 8000 },
-    { "id": "udp",    "type": "UdpSocket", "host": "127.0.0.1", "port": 9000 }
+    { "id": "src", "type": "RandomSource",      "args": [1000] },
+    { "id": "tcp", "type": "TCPWebSocket",      "args": [9001] },
+    { "id": "udp", "type": "UDPWebSocket",      "args": [9002] }
   ],
   "edges": [
-    { "from": "random", "to": "tcp" },
-    { "from": "random", "to": "udp" }
+    { "from": "src", "to": "tcp" },
+    { "from": "src", "to": "udp" }
   ]
 }

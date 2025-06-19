@@ -1,62 +1,83 @@
-cmake_minimum_required(VERSION 3.10)
-project(cpp-pipeline VERSION 1.1.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.15)
+project(cpp-pipeline VERSION 2.0.0 LANGUAGES CXX)
 
-# Require C++17
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#–– Build Settings
+set(CMAKE_CXX_STANDARD       17)
+set(CMAKE_INSTALL_PREFIX     "/usr" CACHE PATH "Install prefix" FORCE)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-# Thread support for std::thread (pulls in -pthread)
-find_package(Threads REQUIRED)
-
-# JSON parsing
-find_package(nlohmann_json 3.2.0 REQUIRED)
-
-# ØMQ core
-find_package(ZeroMQ REQUIRED)
-
-# Boost.System for WebSocket++’s Asio backend (if used)
+#–– Dependencies
+find_package(nlohmann_json REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(ZeroMQ    REQUIRED)
+find_package(cppzmq    REQUIRED)
 
-# Ensure the build-time config directory exists
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/config)
+#–– Make our headers available
+# (assumes your shared headers live in <project-root>/include/)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Copy config/config.json into build/config/config.json
-configure_file(
-  ${CMAKE_SOURCE_DIR}/config/config.json
-  ${CMAKE_BINARY_DIR}/config/config.json
-  COPYONLY
+#–– engine (includes config_parser.cpp)
+add_executable(cp_engine
+  src/engine.cpp
+  src/config_parser.cpp
 )
-
-# Engine executable
-add_executable(Engine Engine.cpp)
-
-# Include directories (WebSocket++ is header-only; needs Boost.System)
-target_include_directories(Engine PRIVATE
-    ${Boost_INCLUDE_DIRS}
-)
-
-# Link libraries
-target_link_libraries(Engine PRIVATE
-    ZeroMQ::zmq
+target_link_libraries(cp_engine
+  PRIVATE
     nlohmann_json::nlohmann_json
-    Threads::Threads
+    ZeroMQ::zmq
+    cppzmq::zmq
+)
+install(TARGETS cp_engine
+        RUNTIME DESTINATION bin)
+
+#–– RandomSource node
+add_executable(RandomSource
+  nodes/RandomSource.cpp
+)
+target_link_libraries(RandomSource
+  PRIVATE
+    ZeroMQ::zmq
+    cppzmq::zmq
+)
+install(TARGETS RandomSource
+        RUNTIME DESTINATION bin)
+
+#–– TCPWebSocket node
+add_executable(TCPWebSocket
+  nodes/TCPWebSocket.cpp
+)
+target_link_libraries(TCPWebSocket
+  PRIVATE
     Boost::system
+    ZeroMQ::zmq
+    cppzmq::zmq
 )
+install(TARGETS TCPWebSocket
+        RUNTIME DESTINATION bin)
 
-# Install rules
-install(TARGETS Engine RUNTIME DESTINATION usr/bin)
-
-# Install the config tree under /etc/cpp-pipeline/config
-install(
-  DIRECTORY ${CMAKE_BINARY_DIR}/config
-  DESTINATION etc/cpp-pipeline
+#–– UDPWebSocket node
+add_executable(UDPWebSocket
+  nodes/UDPWebSocket.cpp
 )
+target_link_libraries(UDPWebSocket
+  PRIVATE
+    Boost::system
+    ZeroMQ::zmq
+    cppzmq::zmq
+)
+install(TARGETS UDPWebSocket
+        RUNTIME DESTINATION bin)
 
-# CPack settings for .deb packaging
-include(InstallRequiredSystemLibraries)
-set(CPACK_PACKAGE_NAME "cpp-pipeline")
-set(CPACK_PACKAGE_VERSION "1.1.0")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Niraj Nagrale niraj6192@gmail.com")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libzmq5, libboost-system1.71.0, libc6 (>= 2.27)")
-set(CPACK_GENERATOR "DEB")
+#–– Config files into /etc/cpp-pipeline
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/config/
+        DESTINATION /etc/cpp-pipeline
+        FILES_MATCHING PATTERN "*.json")
+
+#–– CPack (Debian) Packaging 
+set(CPACK_GENERATOR          "DEB")
+set(CPACK_PACKAGE_NAME       "cpp-pipeline")
+set(CPACK_PACKAGE_VERSION    ${PROJECT_VERSION})
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Niraj Nagrale <niraj6192@gmail.com>")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Minimal in-memory, UNIX-socket style data pipeline")
+set(CPACK_DEBIAN_PACKAGE_SECTION     "utils")
 include(CPack)
