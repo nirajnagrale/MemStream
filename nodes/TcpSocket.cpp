@@ -11,6 +11,7 @@
 #include <utils/io_utils.h>
 #include <utils/socket_utils.h>
 #include <chrono>
+#include <atomic>
 
 namespace asio      = boost::asio;
 namespace beast     = boost::beast;
@@ -21,12 +22,54 @@ using tcp           = asio::ip::tcp;
 using WsStream    = websocket::stream<tcp::socket>;
 using WsStreamPtr = std::shared_ptr<WsStream>;
 
+// Global connection state
+std::atomic<bool> ws_connected{false};
+
+/**
+ * Async read loop to handle WebSocket control frames (ping/pong)
+ */
+void start_websocket_read_loop(WsStreamPtr ws) {
+    // Set up control frame handler for ping/pong
+    ws->control_callback([](websocket::frame_type kind, beast::string_view payload) {
+        if (kind == websocket::frame_type::ping) {
+            std::cout << "[TCP-BRIDGE] Received ping, auto-responding with pong\n";
+        } else if (kind == websocket::frame_type::pong) {
+            std::cout << "[TCP-BRIDGE] Received pong\n";
+        }
+    });
+
+    // Start async read loop to process control frames
+    auto buffer = std::make_shared<beast::flat_buffer>();
+    
+    std::function<void()> do_read = [ws, buffer, &do_read]() {
+        ws->async_read(*buffer, 
+            [ws, buffer, &do_read](boost::beast::error_code ec, std::size_t bytes_transferred) {
+                if (ec) {
+                    std::cout << "[TCP-BRIDGE] WebSocket read error: " << ec.message() << "\n";
+                    ws_connected = false;
+                    return;
+                }
+                
+                // We don't expect actual data messages from client in this bridge,
+                // but we need to keep reading to handle control frames
+                std::cout << "[TCP-BRIDGE] Received " << bytes_transferred 
+                         << " bytes from client (unexpected data)\n";
+                
+                buffer->clear();
+                do_read(); // Continue reading
+            });
+    };
+    
+    do_read(); // Start the read loop
+}
+
 /**
  * Starts a thread that:
  *  1) Accepts a TCP connection on `port` using `ioc`,
  *  2) Upgrades it to a WebSocket,
- *  3) Fulfills `ws_promise` with the ready WebSocket,
- *  4) Runs `ioc.run()` to service all posted write() calls.
+ *  3) Sets up ping/pong handling,
+ *  4) Fulfills `ws_promise` with the ready WebSocket,
+ *  5) Runs `ioc.run()` to service all posted write() calls.
  */
 static std::thread start_websocket_thread(asio::io_context &ioc,
                                           unsigned short port,
@@ -39,10 +82,25 @@ static std::thread start_websocket_thread(asio::io_context &ioc,
         acceptor.accept(socket);
 
         auto ws = std::make_shared<WsStream>(std::move(socket));
+        
+        // Configure WebSocket options
+        ws->set_option(websocket::stream_base::timeout::suggested(
+            beast::role_type::server));
+        ws->set_option(websocket::stream_base::decorator(
+            [](websocket::response_type& res) {
+                res.set(beast::http::field::server,
+                    std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async");
+            }));
+            
         ws->accept();
         ws->text(true); 
+        
         std::cout << "WebSocket connected on port " << port << "\n";
+        ws_connected = true;
 
+        // Start the read loop to handle control frames
+        start_websocket_read_loop(ws);
+        
         ws_promise.set_value(ws);
         auto work_guard = asio::make_work_guard(ioc);
         ioc.run();
@@ -74,7 +132,7 @@ void zmq_receive_loop(zmq::context_t &ctx,
                 auto rc = pullers[i].recv(msg, zmq::recv_flags::none);
                 if(!rc) continue;
                 std::string data{static_cast<char*>(msg.data()), msg.size()};
-               std::cout << "[TCP-BRIDGE] pulled " << data << '\n';
+                std::cout << "[TCP-BRIDGE] pulled " << data << '\n';
                 handler(data);
             }
         }
@@ -96,14 +154,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: no --inputs endpoints\n";
         return 1;
     }
-
-    // ── DEBUG ───────────────────────────────────────────────
-    std::cout << "[TCP] argv[0] = " << argv[0] << '\n';
-    std::cout << "[TCP] inputs:";
-    for (auto &s : inputs)  std::cout << ' ' << s;
-    std::cout << "   outputs:";
-    for (auto &s : outputs) std::cout << ' ' << s;
-    std::cout << std::endl;
         
     // 2) Prepare downstream ZMQ PUSH sockets (may be empty)
     zmq::context_t zmq_ctx{1};
@@ -120,17 +170,29 @@ int main(int argc, char* argv[]) {
 
     // 5) Enter the ZMQ receive loop on the main thread
     zmq_receive_loop(zmq_ctx, inputs, [&](const std::string &data) {
+        // Check if WebSocket is still connected before writing
+        if (!ws_connected.load()) {
+            std::cout << "[TCP-BRIDGE] WebSocket disconnected, skipping write for: " << data << '\n';
+            goto forward_to_zmq; // Still forward to ZMQ even if WS is down
+        }
+        
         // a) Post WebSocket write to the Asio thread
-        //    (this is safe because ws is shared_ptr)
         ioc.post([ws, data]() mutable {
-        std::cout << "[TCP-BRIDGE]  →WS  " << data << '\n';
-        ws->async_write(asio::buffer(data), 
-            [](boost::beast::error_code ec, std::size_t bytes) {
-                if (ec) {
-                    std::cout << "[TCP-BRIDGE] Async write error: " << ec.message() << '\n';
-                }
-            });
-    });
+            if (!ws_connected.load()) {
+                return; // Double-check in the IO thread
+            }
+            
+            std::cout << "[TCP-BRIDGE]  →WS  " << data << '\n';
+            ws->async_write(asio::buffer(data), 
+                [](boost::beast::error_code ec, std::size_t bytes) {
+                    if (ec) {
+                        std::cout << "[TCP-BRIDGE] Async write error: " << ec.message() << '\n';
+                        ws_connected = false;
+                    }
+                });
+        });
+        
+        forward_to_zmq:
         // b) Forward to any downstream ZMQ nodes
         for (auto &p : pushers) {
             p.send(zmq::buffer(data), zmq::send_flags::none);

@@ -38,6 +38,7 @@ static std::thread start_udp_sender(asio::io_context &ioc,
         auto sender = std::make_shared<UdpSender>(ioc, port);
         std::cout << "UDPWebSocket ready to send datagrams to "
                   << sender->endpoint << "\n";
+        auto work_guard = asio::make_work_guard(ioc);
         p.set_value(sender);
         ioc.run();
     });
@@ -58,7 +59,7 @@ void zmq_receive_loop(zmq::context_t &ctx,
         items.push_back({ s.handle(), 0, ZMQ_POLLIN, 0 });
 
     while (true) {
-        zmq::poll(items, std::chrono::milliseconds(-1));
+        zmq::poll(items, std::chrono::milliseconds::max());
         for (size_t i = 0; i < items.size(); ++i) {
             if (items[i].revents & ZMQ_POLLIN) {
                 zmq::message_t msg;
@@ -106,7 +107,11 @@ int main(int argc, char* argv[]) {
     zmq_receive_loop(zmq_ctx, inputs, [&](const std::string &data){
         // a) Post UDP send into Asio thread
         ioc.post([sender, data]() mutable {
-            sender->socket.send_to(asio::buffer(data), sender->endpoint);
+            boost::system::error_code ec;
+            auto bytes_sent = sender->socket.send_to(asio::buffer(data), sender->endpoint, 0, ec);
+            if (ec) {
+                std::cout << "[UDP-BRIDGE] Send error: " << ec.message() << '\n';
+            }
         });
         // b) Forward to any downstream ZMQ outputs
         for (auto &p : pushers) {
