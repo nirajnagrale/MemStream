@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
 
     // 1) Parse generation interval
     int interval_ms = std::stoi(argv[1]);
+    std::cout << "Generating random numbers every " << interval_ms << " ms\n";
 
     // 2) Parse I/O lists
     std::vector<std::string> inputs, outputs;
@@ -61,7 +62,7 @@ int main(int argc, char* argv[]) {
     // pushers[0] → TCP sink, pushers[1] → UDP sink
 
     // 4) Spawn control‐listener thread
-    std::atomic<int> mode{0}; // start in TCP mode
+    std::atomic<int> mode{2}; // start in Both mode
     auto control_thread = init_control_listener(ctx,"ipc:///tmp/control.ipc",mode);
 
     // 5) Random‐generator setup
@@ -72,19 +73,20 @@ int main(int argc, char* argv[]) {
     while (true) {
         int value = dist(rng);
         std::string msg = std::to_string(value);
-
+        //std::cout<< "Generated: " << msg << std::endl;
+        auto flags = zmq::send_flags::dontwait;
         int m = mode.load();
         if (m == 0) {
-            pushers[0].send(zmq::buffer(msg), zmq::send_flags::none);
+            pushers[0].send(zmq::buffer(msg), flags);
         }
         else if (m == 1) {
-            pushers[1].send(zmq::buffer(msg), zmq::send_flags::none);
+            pushers[1].send(zmq::buffer(msg), flags);
         }
         else if(m>=2)
         {
             for (auto &sock : pushers) 
             {
-                sock.send(zmq::buffer(msg), zmq::send_flags::none);
+                sock.send(zmq::buffer(msg), flags);
             }
         }
 

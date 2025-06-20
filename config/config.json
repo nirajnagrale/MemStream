@@ -1,8 +1,8 @@
 {
   "nodes": [
     { "id": "src", "type": "RandomSource",      "args": [1000] },
-    { "id": "tcp", "type": "TCPWebSocket",      "args": [9001] },
-    { "id": "udp", "type": "UDPWebSocket",      "args": [9002] }
+    { "id": "tcp", "type": "TcpSocket",      "args": [9001] },
+    { "id": "udp", "type": "UdpSocket",      "args": [9002] }
   ],
   "edges": [
     { "from": "src", "to": "tcp" },

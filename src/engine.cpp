@@ -36,7 +36,11 @@ static pid_t spawn_node(const std::string &prog,
     }
     if (pid == 0) {
         // In child: replace with the new program
-        execvp(prog.c_str(), argv.data());
+        std::string prog_path;
+          if (prog.find('/') == std::string::npos) {
+            prog_path = "./" + prog;
+        }
+        execvp(prog_path.c_str(), argv.data());
         perror("execvp failed");
         _exit(1);
     }

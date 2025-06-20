@@ -34,14 +34,17 @@ static std::thread start_websocket_thread(asio::io_context &ioc,
 {
     return std::thread([&ioc, port, &ws_promise]() {
         tcp::acceptor acceptor{ioc, {tcp::v4(), port}};
+        std::cout << "TCPWebSocket listening on port " << port << "\n";
         tcp::socket socket{ioc};
         acceptor.accept(socket);
 
         auto ws = std::make_shared<WsStream>(std::move(socket));
         ws->accept();
+        ws->text(true); 
         std::cout << "WebSocket connected on port " << port << "\n";
 
         ws_promise.set_value(ws);
+        auto work_guard = asio::make_work_guard(ioc);
         ioc.run();
     });
 }
@@ -64,13 +67,14 @@ void zmq_receive_loop(zmq::context_t &ctx,
         items.push_back({ s.handle(), 0, ZMQ_POLLIN, 0 });
 
     while (true) {
-        zmq::poll(items,std::chrono::milliseconds(-1));
+        zmq::poll(items, std::chrono::milliseconds::max());
         for (size_t i = 0; i < items.size(); ++i) {
             if (items[i].revents & ZMQ_POLLIN) {
                 zmq::message_t msg;
                 auto rc = pullers[i].recv(msg, zmq::recv_flags::none);
                 if(!rc) continue;
                 std::string data{static_cast<char*>(msg.data()), msg.size()};
+               std::cout << "[TCP-BRIDGE] pulled " << data << '\n';
                 handler(data);
             }
         }
@@ -93,6 +97,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // ── DEBUG ───────────────────────────────────────────────
+    std::cout << "[TCP] argv[0] = " << argv[0] << '\n';
+    std::cout << "[TCP] inputs:";
+    for (auto &s : inputs)  std::cout << ' ' << s;
+    std::cout << "   outputs:";
+    for (auto &s : outputs) std::cout << ' ' << s;
+    std::cout << std::endl;
+        
     // 2) Prepare downstream ZMQ PUSH sockets (may be empty)
     zmq::context_t zmq_ctx{1};
     auto pushers = create_push_sockets(zmq_ctx, outputs);
@@ -109,16 +121,22 @@ int main(int argc, char* argv[]) {
     // 5) Enter the ZMQ receive loop on the main thread
     zmq_receive_loop(zmq_ctx, inputs, [&](const std::string &data) {
         // a) Post WebSocket write to the Asio thread
+        //    (this is safe because ws is shared_ptr)
         ioc.post([ws, data]() mutable {
-            ws->write(asio::buffer(data));
-        });
+        std::cout << "[TCP-BRIDGE]  →WS  " << data << '\n';
+        ws->async_write(asio::buffer(data), 
+            [](boost::beast::error_code ec, std::size_t bytes) {
+                if (ec) {
+                    std::cout << "[TCP-BRIDGE] Async write error: " << ec.message() << '\n';
+                }
+            });
+    });
         // b) Forward to any downstream ZMQ nodes
         for (auto &p : pushers) {
             p.send(zmq::buffer(data), zmq::send_flags::none);
         }
     });
 
-    // (In practice, you'd have shutdown logic here)
     ws_thread.join();
     return 0;
 }

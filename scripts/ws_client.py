@@ -1,20 +1,16 @@
+#!/usr/bin/env python3
 import asyncio
-import sys
-from websockets import connect
+import websockets, sys
+
+HOST = "localhost"
+PORT = 9001
 
 async def main():
-    uri = "ws://localhost:9002"
-    try:
-        async with connect(uri) as websocket:
-            print(f"Connected to {uri}. Listening for messages...")
-            async for message in websocket:
-                print(message)
-    except Exception as e:
-        print(f"Connection error: {e}", file=sys.stderr)
+    uri = f"ws://{HOST}:{PORT}"
+    async with websockets.connect(uri) as ws:
+        print(f"[{PORT}] Connected — listening for messages…")
+        async for message in ws:
+            print(f"[{PORT}] Received: {message!r}")
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except RuntimeError:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
+    asyncio.run(main())
