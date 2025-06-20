@@ -25,32 +25,24 @@ or: sudo dpkg -i cpp-pipeline-2.0.0-Linux.deb && sudo apt -f install
 Run:cp_engine /etc/cpp-pipeline/config.json
 
 # Engine
-Engine starts the pipeline mentioned in json file and validates DAG and passes --input and --output  parameter which are inputs to the particular nodes
+  Engine starts the pipeline mentioned in the JSON file and validates DAG and passes --input and --output  parameters which are inputs to the particular nodes
 
 
 # Nodes
-Every node is designed in such a way that the main thread pull and pushes into the socket and worker thread either process and notifies the main thread.
+  Every node is designed so that the main thread pulls and pushes into the socket, and the worker thread processes and notifies the main thread.
 
-
-Every 
-# helper Scripts
+# Helper Scripts
 1. controller.py
-
-Tell RandomGeneratorNode to send future samples either to the TCP or the UDP outlet.
-
-run: python3 controller.py TCP|UDP|BOTH
+  Tell RandomGeneratorNode to send future samples either to the TCP or the UDP outlet.
+  run: python3 controller.py TCP|UDP|BOTH
 
 2. udp_client.py
-
-connects with UdpSocket node to receive the data from the port mentioned in config.json. Also change the port in udp_client.py file accordingly
-
-run: python3 udp_client.py 
+  connects with the UdpSocket node to receive the data from the port mentioned in config.json. Also, change the port in the  udp_client.py file accordingly
+  run: python3 udp_client.py 
 
 3. ws_client.py
-
-connects with TcpSocket node to receive the data from the port mentioned in config.json. Also change the port in ws_client.py file accordingly
-
-run: python3 ws_client.py 
+  connects with the TcpSocket node to receive the data from the port mentioned in config.json. Also, change the port in the  ws_client.py file accordingly
+  run: python3 ws_client.py 
 
 
 
