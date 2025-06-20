@@ -11,13 +11,6 @@
 
 extern char **environ;
 
-/**
- * Spawns a new process running `prog` with the given argv arguments.
- * @param prog  The executable name (must be in PATH or a full path)
- * @param args  The argv[1..n] arguments
- * @return      Child PID on success, -1 on failure
- */
-
 
 static pid_t spawn_node(const std::string &prog,
                         const std::vector<std::string> &args)
@@ -37,11 +30,7 @@ static pid_t spawn_node(const std::string &prog,
     }
     if (pid == 0) {
         // In child: replace with the new program
-        std::string prog_path;
-          if (prog.find('/') == std::string::npos) {
-            prog_path = "./" + prog;
-        }
-        execvp(prog_path.c_str(), argv.data());
+        execvp(prog.c_str(), argv.data());
         perror("execvp failed");
         _exit(1);
     }
@@ -85,14 +74,14 @@ int main(int argc, char* argv[]) {
         for (const auto &a : node.args)
             args.push_back(a);
 
-        // --inputs <uri1> <uri2> ...
+        // --inputs
         if (!inputs[node.id].empty()) {
             args.push_back("--inputs");
             for (const auto &in_ep : inputs[node.id])
                 args.push_back(in_ep);
         }
 
-        // --outputs <uri1> <uri2> ...
+        // --outputs 
         if (!outputs[node.id].empty()) {
             args.push_back("--outputs");
             for (const auto &out_ep : outputs[node.id])

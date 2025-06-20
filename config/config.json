@@ -1,6 +1,6 @@
 {
   "nodes": [
-    { "id": "src", "type": "RandomSource",      "args": [1000] },
+    { "id": "src", "type": "RandomSource",      "args": [100] },
     { "id": "tcp", "type": "TcpSocket",      "args": [9001] },
     { "id": "udp", "type": "UdpSocket",      "args": [9002] }
   ],

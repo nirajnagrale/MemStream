@@ -1,0 +1,5 @@
+build
+*.deb
+.git
+.vscode
+cpp-pipeline-2.0.0-Linux.deb
