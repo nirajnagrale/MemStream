@@ -57,7 +57,5 @@ run: python3 ws_client.py
 
 
 
-<img width="541" alt="ws_client" src="https://github.com/user-attachments/assets/abe86646-b265-431b-8020-683084046a45" />
-<img width="568" alt="controller" src="https://github.com/user-attachments/assets/b97af08b-92a1-47f7-a67a-58447dc1ec1d" />
-<img width="701" alt="udp_client" src="https://github.com/user-attachments/assets/ed43451d-8938-4a6b-a38e-fb19a7d01abb" />
+![controller](https://github.com/user-attachments/assets/037fa2be-ceaf-4e84-aa4b-2458f7d09235)
 
