@@ -1,10 +1,10 @@
 # cpp-pipeline
-A minimal C++ data‑pipeline ver 2.0.0 engine that chains independent nodes (processes) through ZeroMQ sockets to form a Directed Acyclic Graph (DAG).
+A minimal C++ data‑pipeline ver 2.0.0 engine that chains independent nodes (processes) through ZeroMQ sockets to form a Directed Acyclic Graph (DAG).<br>
 
-RandomGeneratorNode – emits pseudo‑random numbers on demand
-TcpSocketNode – republishes data on an available TCP port (default 9001)
-UdpSocketNode – republishes data on an available UDP port (default 9002)
-controller.py – tells the Random Node which outlet (TCP or UDP) to use at run‑time
+RandomGeneratorNode – emits pseudo‑random numbers on demand<br>
+TcpSocketNode – republishes data on an available TCP port (default 9001)<br>
+UdpSocketNode – republishes data on an available UDP port (default 9002)<br>
+controller.py – tells the Random Node which outlet (TCP or UDP) to use at run‑time<br>
 
 
 # Build & Run
@@ -32,17 +32,17 @@ Run:cp_engine /etc/cpp-pipeline/config.json
   Every node is designed so that the main thread pulls and pushes into the socket, and the worker thread processes and notifies the main thread.
 
 # Helper Scripts
-1. controller.py
-  Tell RandomGeneratorNode to send future samples either to the TCP or the UDP outlet.
-  run: python3 controller.py TCP|UDP|BOTH
+1. controller.py<br>
+  Tell RandomGeneratorNode to send future samples either to the TCP or the UDP outlet.<br>
+  run: python3 controller.py TCP|UDP|BOTH<br>
 
-2. udp_client.py
-  connects with the UdpSocket node to receive the data from the port mentioned in config.json. Also, change the port in the  udp_client.py file accordingly
-  run: python3 udp_client.py 
+2. udp_client.py<br>
+  connects with the UdpSocket node to receive the data from the port mentioned in config.json. Also, change the port in the  udp_client.py file accordingly<br>
+  run: python3 udp_client.py <br>
 
-3. ws_client.py
-  connects with the TcpSocket node to receive the data from the port mentioned in config.json. Also, change the port in the  ws_client.py file accordingly
-  run: python3 ws_client.py 
+3. ws_client.py<br>
+  connects with the TcpSocket node to receive the data from the port mentioned in config.json. Also, change the port in the  ws_client.py file accordingly<br>
+  run: python3 ws_client.py <br>
 
 
 
