@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
         int value = dist(rng);
         std::string msg = std::to_string(value);
         //std::cout<< "Generated: " << msg << std::endl;
-        auto flags = zmq::send_flags::none;
+        auto flags = zmq::send_flags::dontwait;
         int m = mode.load();
         if (m == 0) {
             pushers[0].send(zmq::buffer(msg), flags);
