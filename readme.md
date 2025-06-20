@@ -1,5 +1,5 @@
 # cpp-pipeline
-A minimal C++ data‑pipeline engine that chains independent nodes (processes) through ZeroMQ sockets to form a Directed Acyclic Graph (DAG).
+A minimal C++ data‑pipeline ver 2.0.0 engine that chains independent nodes (processes) through ZeroMQ sockets to form a Directed Acyclic Graph (DAG).
 
 RandomGeneratorNode – emits pseudo‑random numbers on demand
 TcpSocketNode – republishes data on an available TCP port (default 9001)
