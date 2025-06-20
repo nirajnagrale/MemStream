@@ -25,9 +25,6 @@ using WsStreamPtr = std::shared_ptr<WsStream>;
 // Global connection state
 std::atomic<bool> ws_connected{false};
 
-/**
- * Async read loop to handle WebSocket control frames (ping/pong)
- */
 void start_websocket_read_loop(WsStreamPtr ws) {
     // Set up control frame handler for ping/pong
     ws->control_callback([](websocket::frame_type kind, beast::string_view payload) {
@@ -63,14 +60,6 @@ void start_websocket_read_loop(WsStreamPtr ws) {
     do_read(); // Start the read loop
 }
 
-/**
- * Starts a thread that:
- *  1) Accepts a TCP connection on `port` using `ioc`,
- *  2) Upgrades it to a WebSocket,
- *  3) Sets up ping/pong handling,
- *  4) Fulfills `ws_promise` with the ready WebSocket,
- *  5) Runs `ioc.run()` to service all posted write() calls.
- */
 static std::thread start_websocket_thread(asio::io_context &ioc,
                                           unsigned short port,
                                           std::promise<WsStreamPtr> &ws_promise)
@@ -106,13 +95,6 @@ static std::thread start_websocket_thread(asio::io_context &ioc,
         ioc.run();
     });
 }
-
-/**
- * Generic ZeroMQ receive loop:
- *  - Connects PULL sockets to each URI in `inputs`
- *  - Polls them forever
- *  - Invokes `handler(data)` on each received message
- */
 template<typename Handler>
 void zmq_receive_loop(zmq::context_t &ctx,
                       const std::vector<std::string> &inputs,
@@ -132,7 +114,7 @@ void zmq_receive_loop(zmq::context_t &ctx,
                 auto rc = pullers[i].recv(msg, zmq::recv_flags::none);
                 if(!rc) continue;
                 std::string data{static_cast<char*>(msg.data()), msg.size()};
-                std::cout << "[TCP-BRIDGE] pulled " << data << '\n';
+                //std::cout << "[TCP-BRIDGE] pulled " << data << '\n';
                 handler(data);
             }
         }
@@ -182,7 +164,7 @@ int main(int argc, char* argv[]) {
                 return; // Double-check in the IO thread
             }
             
-            std::cout << "[TCP-BRIDGE]  →WS  " << data << '\n';
+            //std::cout << "[TCP-BRIDGE]  →WS  " << data << '\n';
             ws->async_write(asio::buffer(data), 
                 [](boost::beast::error_code ec, std::size_t bytes) {
                     if (ec) {

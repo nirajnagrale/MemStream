@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <utils/io_utils.h>
+#include <utils/dag_utils.h>
 
 extern char **environ;
 
@@ -55,11 +56,13 @@ int main(int argc, char* argv[]) {
     }
     const std::string config_file = argv[1];
 
-    // 1) Parse the JSON configuration
+    // 1) Parse the JSON configuration and validate the DAG
     std::vector<NodeConfig> nodes;
     std::vector<EdgeConfig> edges;
     try {
         parse_config(config_file, nodes, edges);
+        dag::validate_dag(nodes, edges);
+
     } catch (const std::exception &e) {
         std::cerr << "Error parsing config: " << e.what() << "\n";
         return 1;
