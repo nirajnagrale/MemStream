@@ -1,4 +1,4 @@
-# cpp-pipeline
+# MemStream
 
 **Minimal, real-time in-memory data-pipeline engine**
 
