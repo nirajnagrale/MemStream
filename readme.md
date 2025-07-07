@@ -1,4 +1,4 @@
-# cpp-pipeline
+# MemStream
 A minimal C++ data‑pipeline ver 2.0.0 engine that chains independent nodes (processes) through ZeroMQ sockets to form a Directed Acyclic Graph (DAG).<br>
 
 RandomGeneratorNode – emits pseudo‑random numbers on demand<br>
